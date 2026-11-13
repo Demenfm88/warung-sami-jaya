@@ -1,0 +1,315 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WARUNG SAMI JAYA</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f1f4f8;color:#172536}
+header{background:#102b46;color:white;padding:22px 16px}
+header h1{margin:0;font-size:24px}
+header p{margin:6px 0 0}
+nav{display:flex;overflow:auto;background:white;padding:8px;gap:7px;position:sticky;top:0}
+button{border:0;padding:11px;border-radius:9px;background:#176b87;color:white;font-weight:bold}
+nav button{background:#e5edf3;color:#102b46;white-space:nowrap}
+nav button.active{background:#102b46;color:white}
+main{max-width:900px;margin:auto;padding:12px}
+section{display:none}
+section.active{display:block}
+.card{background:white;border-radius:13px;padding:15px;margin-bottom:13px;box-shadow:0 2px 9px #0001}
+h2{font-size:19px;color:#102b46;margin-top:0}
+label{display:block;font-weight:bold;margin:10px 0 5px}
+input{width:100%;padding:12px;border:1px solid #ccd5df;border-radius:8px;font-size:16px}
+.row{display:flex;gap:7px}
+.row>*{flex:1;min-width:0}
+.full{width:100%;margin-top:10px}
+.green{background:#16845b}
+.red{background:#c83d4d}
+.light{background:#e5edf3;color:#102b46}
+.item{padding:11px 0;border-bottom:1px solid #eee}
+.small{font-size:12px;color:#667789}
+.total{font-size:25px;font-weight:bold;color:#102b46}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:9px 5px;border-bottom:1px solid #ddd;text-align:left}
+.wrap{overflow:auto}
+#notaCetak{display:none}
+@media print{
+body *{visibility:hidden}
+#notaCetak,#notaCetak *{visibility:visible}
+#notaCetak{display:block;position:absolute;left:0;top:0;width:100%;font-family:monospace;color:black}
+}
+</style>
+</head>
+<body>
+<header>
+<h1>WARUNG SAMI JAYA</h1>
+<p>Jl. Kutilang Sumingkir</p>
+</header>
+
+<nav>
+<button class="active" onclick="buka('kasir',this)">KASIR</button>
+<button onclick="buka('barang',this)">BARANG</button>
+<button onclick="buka('riwayat',this)">RIWAYAT</button>
+<button onclick="buka('cadangan',this)">CADANGAN</button>
+</nav>
+
+<main>
+<section id="kasir" class="active">
+<div class="card">
+<h2>Transaksi Penjualan</h2>
+<label>Nama pelanggan (opsional)</label>
+<input id="pelanggan" placeholder="Nama pelanggan">
+<label>Scan barcode / cari barang</label>
+<input id="cari" placeholder="Scan barcode lalu tekan Enter">
+<button class="full" onclick="cariBarang()">CARI BARANG</button>
+<div id="keranjang"></div>
+</div>
+
+<div class="card">
+<h2>Pembayaran</h2>
+<div>Total belanja</div>
+<div class="total" id="total">Rp0</div>
+<label>Uang diterima</label>
+<input id="bayar" type="number" inputmode="numeric" placeholder="Masukkan uang" oninput="hitung()">
+<p>Kembalian: <b id="kembali">Rp0</b></p>
+<button class="green full" onclick="transaksiSimpan()">SIMPAN & CETAK NOTA</button>
+<button class="light full" onclick="kosongkan()">KOSONGKAN KERANJANG</button>
+</div>
+</section>
+
+<section id="barang">
+<div class="card">
+<h2>Tambah / Edit Barang</h2>
+<input type="hidden" id="editId">
+<label>Nama barang</label>
+<input id="nama" placeholder="Nama barang">
+<label>Barcode / kode barang</label>
+<input id="kode" placeholder="Barcode">
+<div class="row">
+<div><label>Harga jual</label><input id="harga" type="number" inputmode="numeric"></div>
+<div><label>Jumlah stok</label><input id="stok" type="number" inputmode="numeric"></div>
+</div>
+<button class="green full" onclick="simpanBarang()">SIMPAN BARANG</button>
+<button class="light full" onclick="resetForm()">BERSIHKAN</button>
+</div>
+<div class="card">
+<h2>Daftar Barang</h2>
+<input id="filter" placeholder="Cari barang..." oninput="tampilBarang()">
+<div class="wrap"><table>
+<thead><tr><th>Barang</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr></thead>
+<tbody id="daftarBarang"></tbody>
+</table></div>
+</div>
+</section>
+
+<section id="riwayat">
+<div class="card">
+<h2>Riwayat Transaksi</h2>
+<div id="daftarRiwayat"></div>
+</div>
+</section>
+
+<section id="cadangan">
+<div class="card">
+<h2>Cadangan Data</h2>
+<p>Unduh cadangan barang dan transaksi secara rutin.</p>
+<button class="full" onclick="backup()">UNDUH CADANGAN JSON</button>
+<label>Pulihkan cadangan</label>
+<input type="file" id="fileCadangan" accept=".json">
+<button class="green full" onclick="pulihkan()">PULIHKAN DATA</button>
+</div>
+<div class="card">
+<h2>WhatsApp Toko</h2>
+<label>Nomor WhatsApp (awali 62)</label>
+<input id="wa" placeholder="628xxxxxxxxxx">
+<button class="full" onclick="simpanWA()">SIMPAN NOMOR</button>
+</div>
+</section>
+</main>
+
+<div id="notaCetak"></div>
+
+<script>
+const K="wsj_barang",T="wsj_transaksi";
+let barang=JSON.parse(localStorage.getItem(K)||"[]");
+let riwayat=JSON.parse(localStorage.getItem(T)||"[]");
+let keranjang=[];
+
+const rupiah=n=>"Rp"+Number(n||0).toLocaleString("id-ID");
+const simpan=()=>{
+ localStorage.setItem(K,JSON.stringify(barang));
+ localStorage.setItem(T,JSON.stringify(riwayat));
+};
+const aman=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function buka(id,tombol){
+ document.querySelectorAll("main section").forEach(x=>x.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+ tombol.classList.add("active");
+ tampilBarang();tampilRiwayat();
+}
+
+function resetForm(){
+ ["editId","nama","kode","harga","stok"].forEach(x=>document.getElementById(x).value="");
+}
+
+function simpanBarang(){
+ let id=editId.value,n=nama.value.trim(),k=kode.value.trim();
+ let h=Number(harga.value),s=Number(stok.value);
+ if(!n)return alert("Nama barang wajib diisi");
+ if(h<0||s<0||!Number.isInteger(s))return alert("Harga atau stok tidak benar");
+ if(k&&barang.some(b=>b.kode.toLowerCase()===k.toLowerCase()&&b.id!==id))return alert("Barcode sudah dipakai");
+ if(id){
+ let b=barang.find(x=>x.id===id);
+ Object.assign(b,{nama:n,kode:k,harga:h,stok:s});
+ }else{
+ barang.push({id:String(Date.now())+Math.random(),nama:n,kode:k,harga:h,stok:s});
+ }
+ simpan();resetForm();tampilBarang();alert("Barang tersimpan");
+}
+
+function tampilBarang(){
+ let q=(filter.value||"").toLowerCase();
+ daftarBarang.innerHTML=barang.filter(b=>(b.nama+" "+b.kode).toLowerCase().includes(q)).map(b=>
+ `<tr><td>${aman(b.nama)}<br><small>${aman(b.kode)}</small></td>
+ <td>${rupiah(b.harga)}</td><td>${b.stok}</td>
+ <td><button onclick="editBarang('${b.id}')">Edit</button>
+ <button class="red" onclick="hapusBarang('${b.id}')">X</button></td></tr>`
+ ).join("")||"<tr><td colspan='4'>Belum ada barang</td></tr>";
+}
+
+function editBarang(id){
+ let b=barang.find(x=>x.id===id);if(!b)return;
+ editId.value=b.id;nama.value=b.nama;kode.value=b.kode;
+ harga.value=b.harga;stok.value=b.stok;
+ buka("barang",document.querySelectorAll("nav button")[1]);
+}
+function hapusBarang(id){
+ if(confirm("Hapus barang?")){
+ barang=barang.filter(b=>b.id!==id);simpan();tampilBarang();
+ }
+}
+
+cari.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();cariBarang()}});
+function cariBarang(){
+ let q=cari.value.trim().toLowerCase();if(!q)return;
+ let b=barang.find(x=>x.kode.toLowerCase()===q)||barang.find(x=>x.nama.toLowerCase().includes(q));
+ if(!b)return alert("Barang tidak ditemukan");
+ if(b.stok<1)return alert("Stok habis");
+ let k=keranjang.find(x=>x.id===b.id);
+ if(k){if(k.qty>=b.stok)return alert("Stok tidak cukup");k.qty++}
+ else keranjang.push({id:b.id,qty:1});
+ cari.value="";tampilKeranjang();
+}
+
+function ubah(id,n){
+ let k=keranjang.find(x=>x.id===id),b=barang.find(x=>x.id===id);
+ if(!k||!b)return;k.qty+=n;
+ if(k.qty<1)keranjang=keranjang.filter(x=>x.id!==id);
+ if(k.qty>b.stok){k.qty=b.stok;alert("Stok tidak cukup")}
+ tampilKeranjang();
+}
+
+function jumlah(){
+ return keranjang.reduce((a,k)=>{
+ let b=barang.find(x=>x.id===k.id);
+ return a+(b?b.harga*k.qty:0);
+ },0);
+}
+function tampilKeranjang(){
+ keranjang.innerHTML;
+ let box=document.getElementById("keranjang");
+ box.innerHTML=window.keranjang.length?window.keranjang.map(k=>{
+ let b=barang.find(x=>x.id===k.id);
+ return `<div class="item"><b>${aman(b.nama)}</b><br>${rupiah(b.harga)} × ${k.qty}
+ <button onclick="ubah('${k.id}',-1)">−</button>
+ <button onclick="ubah('${k.id}',1)">+</button>
+ </div>`;
+ }).join(""):"Keranjang kosong";
+ total.textContent=rupiah(jumlah());hitung();
+}
+function hitung(){
+ kembali.textContent=rupiah(Math.max(0,(Number(bayar.value)||0)-jumlah()));
+}
+function kosongkan(){keranjang=[];bayar.value="";tampilKeranjang()}
+
+function transaksiSimpan(){
+ if(!keranjang.length)return alert("Keranjang kosong");
+ let tot=jumlah(),uang=Number(bayar.value)||0;
+ if(uang<tot)return alert("Uang pembayaran kurang");
+ for(let k of keranjang){
+ let b=barang.find(x=>x.id===k.id);
+ if(!b||b.stok<k.qty)return alert("Stok tidak cukup");
+ }
+ let waktu=new Date();
+ let nomor="WSJ-"+waktu.getFullYear()+String(waktu.getMonth()+1).padStart(2,"0")+String(waktu.getDate()).padStart(2,"0")+"-"+String(Date.now()).slice(-6);
+ let items=keranjang.map(k=>{
+ let b=barang.find(x=>x.id===k.id);
+ b.stok-=k.qty;
+ return {nama:b.nama,harga:b.harga,qty:k.qty,subtotal:b.harga*k.qty};
+ });
+ let t={nomor,waktu:waktu.toISOString(),pelanggan:pelanggan.value,items,total:tot,bayar:uang,kembali:uang-tot};
+ riwayat.unshift(t);
+ try{simpan()}catch(e){return alert("Penyimpanan gagal. Jangan tutup halaman; ekspor cadangan segera.")}
+ cetak(t);keranjang=[];pelanggan.value="";bayar.value="";
+ tampilKeranjang();tampilBarang();tampilRiwayat();
+}
+
+function cetak(t){
+ notaCetak.innerHTML=`<center><h2>WARUNG SAMI JAYA</h2>Jl. Kutilang Sumingkir<br>
+ ${aman(t.nomor)}<br>${new Date(t.waktu).toLocaleString("id-ID")}<br>
+ Pelanggan: ${aman(t.pelanggan||"-")}<hr></center>
+ ${t.items.map(i=>`${aman(i.nama)}<br>${i.qty} x ${rupiah(i.harga)} = ${rupiah(i.subtotal)}<br>`).join("")}
+ <hr>Total: ${rupiah(t.total)}<br>Bayar: ${rupiah(t.bayar)}<br>
+ Kembali: ${rupiah(t.kembali)}<hr><center>Terima kasih</center>`;
+ window.print();
+}
+
+function tampilRiwayat(){
+ daftarRiwayat.innerHTML=riwayat.map(t=>
+ `<div class="item"><b>${aman(t.nomor)}</b><br>
+ <small>${new Date(t.waktu).toLocaleString("id-ID")} · ${aman(t.pelanggan||"Tanpa nama")}</small><br>
+ ${rupiah(t.total)}
+ <button onclick="cetakUlang('${t.nomor}')">Cetak</button>
+ <button onclick="kirimWA('${t.nomor}')">WhatsApp</button></div>`
+ ).join("")||"Belum ada transaksi";
+}
+function cetakUlang(n){let t=riwayat.find(x=>x.nomor===n);if(t)cetak(t)}
+function simpanWA(){
+ let n=wa.value.replace(/\D/g,"");
+ if(n&&!n.startsWith("62"))return alert("Nomor harus diawali 62");
+ localStorage.setItem("wsj_wa",n);alert("Nomor tersimpan");
+}
+function kirimWA(n){
+ let t=riwayat.find(x=>x.nomor===n),nomor=localStorage.getItem("wsj_wa");
+ if(!nomor)return alert("Isi nomor WhatsApp di menu Cadangan");
+ let pesan=`WARUNG SAMI JAYA\nJl. Kutilang Sumingkir\nNota ${t.nomor}\n${t.items.map(i=>i.nama+" x "+i.qty+" = "+rupiah(i.subtotal)).join("\n")}\nTOTAL ${rupiah(t.total)}\nBAYAR ${rupiah(t.bayar)}\nKEMBALI ${rupiah(t.kembali)}`;
+ window.open("https://wa.me/"+nomor+"?text="+encodeURIComponent(pesan),"_blank");
+}
+function backup(){
+ let data={barang,riwayat,wa:localStorage.getItem("wsj_wa")||""};
+ let a=document.createElement("a"),u=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:"application/json"}));
+ a.href=u;a.download="cadangan-warung-sami-jaya.json";a.click();URL.revokeObjectURL(u);
+}
+function pulihkan(){
+ let f=fileCadangan.files[0];if(!f)return alert("Pilih file cadangan");
+ if(!confirm("Ganti data saat ini dengan cadangan?"))return;
+ let r=new FileReader();
+ r.onload=()=>{
+ try{
+ let d=JSON.parse(r.result);
+ if(!Array.isArray(d.barang)||!Array.isArray(d.riwayat))throw Error();
+ barang=d.barang;riwayat=d.riwayat;
+ localStorage.setItem("wsj_wa",d.wa||"");simpan();
+ tampilBarang();tampilRiwayat();alert("Data dipulihkan");
+ }catch(e){alert("File cadangan tidak valid")}
+ };
+ r.readAsText(f);
+}
+tampilBarang();tampilKeranjang();tampilRiwayat();
+</script>
+</body>
+</html>
