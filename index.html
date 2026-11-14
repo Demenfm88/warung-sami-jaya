@@ -3,313 +3,298 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WARUNG SAMI JAYA</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WARUNG SAMI JAYA POS</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f1f4f8;color:#172536}
-header{background:#102b46;color:white;padding:22px 16px}
-header h1{margin:0;font-size:24px}
-header p{margin:6px 0 0}
-nav{display:flex;overflow:auto;background:white;padding:8px;gap:7px;position:sticky;top:0}
-button{border:0;padding:11px;border-radius:9px;background:#176b87;color:white;font-weight:bold}
-nav button{background:#e5edf3;color:#102b46;white-space:nowrap}
-nav button.active{background:#102b46;color:white}
-main{max-width:900px;margin:auto;padding:12px}
-section{display:none}
-section.active{display:block}
-.card{background:white;border-radius:13px;padding:15px;margin-bottom:13px;box-shadow:0 2px 9px #0001}
-h2{font-size:19px;color:#102b46;margin-top:0}
-label{display:block;font-weight:bold;margin:10px 0 5px}
-input{width:100%;padding:12px;border:1px solid #ccd5df;border-radius:8px;font-size:16px}
-.row{display:flex;gap:7px}
-.row>*{flex:1;min-width:0}
-.full{width:100%;margin-top:10px}
-.green{background:#16845b}
-.red{background:#c83d4d}
-.light{background:#e5edf3;color:#102b46}
-.item{padding:11px 0;border-bottom:1px solid #eee}
-.small{font-size:12px;color:#667789}
-.total{font-size:25px;font-weight:bold;color:#102b46}
-table{width:100%;border-collapse:collapse;font-size:13px}
-td,th{padding:9px 5px;border-bottom:1px solid #ddd;text-align:left}
-.wrap{overflow:auto}
-#notaCetak{display:none}
-@media print{
-body *{visibility:hidden}
-#notaCetak,#notaCetak *{visibility:visible}
-#notaCetak{display:block;position:absolute;left:0;top:0;width:100%;font-family:monospace;color:black}
-}
+body{margin:0;background:#f1f4f8;color:#172b45;font-family:Arial}
+header{background:#123b72;color:white;padding:18px}
+header h2{margin:0}
+nav{display:flex;overflow:auto;background:white;padding:8px;gap:7px}
+button{border:0;border-radius:8px;padding:11px;cursor:pointer;font-weight:bold}
+nav button{background:#e8eef6;color:#123b72}
+.active{background:#1769aa!important;color:white!important}
+main{padding:12px;max-width:1100px;margin:auto}
+.page{display:none}.page.active{display:block}
+.panel{background:white;padding:15px;border-radius:12px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+input{width:100%;padding:12px;border:1px solid #ccd5df;border-radius:8px;margin:5px 0}
+.product{border:1px solid #ddd;background:white;text-align:left;padding:13px}
+.product b{display:block;margin-bottom:8px}
+.blue{background:#1769aa;color:white}
+.green{background:#159765;color:white}
+.red{background:#d94b4b;color:white}
+.full{width:100%;margin-top:9px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+td,th{padding:9px;border-bottom:1px solid #ddd;text-align:left}
+.scroll{overflow:auto}
+.total{font-size:23px;font-weight:bold;color:#123b72}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center}
+small{color:#687789}
 </style>
 </head>
 <body>
+
 <header>
-<h1>WARUNG SAMI JAYA</h1>
-<p>Jl. Kutilang Sumingkir</p>
+<h2>WARUNG SAMI JAYA</h2>
+<small style="color:white">POINT OF SALE • SISTEM KASIR</small>
+<div id="jam"></div>
 </header>
 
 <nav>
-<button class="active" onclick="buka('kasir',this)">KASIR</button>
-<button onclick="buka('barang',this)">BARANG</button>
-<button onclick="buka('riwayat',this)">RIWAYAT</button>
-<button onclick="buka('cadangan',this)">CADANGAN</button>
+<button class="active" onclick="halaman('kasir',this)">KASIR</button>
+<button onclick="halaman('barang',this)">BARANG</button>
+<button onclick="halaman('transaksi',this)">TRANSAKSI</button>
+<button onclick="halaman('laporan',this)">LAPORAN</button>
+<button onclick="halaman('backup',this)">BACKUP</button>
 </nav>
 
 <main>
-<section id="kasir" class="active">
-<div class="card">
-<h2>Transaksi Penjualan</h2>
-<label>Nama pelanggan (opsional)</label>
-<input id="pelanggan" placeholder="Nama pelanggan">
-<label>Scan barcode / cari barang</label>
-<input id="cari" placeholder="Scan barcode lalu tekan Enter">
-<button class="full" onclick="cariBarang()">CARI BARANG</button>
+
+<section id="kasir" class="page active">
+<div class="panel">
+<h3>PILIH BARANG</h3>
+<input id="cari" placeholder="Cari nama atau barcode..." oninput="tampilBarang()">
+<div id="produk" class="grid"></div>
+</div>
+
+<div class="panel">
+<h3>KERANJANG BELANJA</h3>
+<input id="pelanggan" placeholder="Nama pelanggan (opsional)">
 <div id="keranjang"></div>
-</div>
-
-<div class="card">
-<h2>Pembayaran</h2>
-<div>Total belanja</div>
-<div class="total" id="total">Rp0</div>
-<label>Uang diterima</label>
-<input id="bayar" type="number" inputmode="numeric" placeholder="Masukkan uang" oninput="hitung()">
-<p>Kembalian: <b id="kembali">Rp0</b></p>
-<button class="green full" onclick="transaksiSimpan()">SIMPAN & CETAK NOTA</button>
-<button class="light full" onclick="kosongkan()">KOSONGKAN KERANJANG</button>
+<hr>
+<div class="row"><b>TOTAL BAYAR</b><span class="total" id="total">Rp0</span></div>
+<button class="green full" onclick="bayar()">BAYAR SEKARANG</button>
 </div>
 </section>
 
-<section id="barang">
-<div class="card">
-<h2>Tambah / Edit Barang</h2>
-<input type="hidden" id="editId">
-<label>Nama barang</label>
+<section id="barang" class="page">
+<div class="panel">
+<h3>KELOLA BARANG</h3>
 <input id="nama" placeholder="Nama barang">
-<label>Barcode / kode barang</label>
-<input id="kode" placeholder="Barcode">
-<div class="row">
-<div><label>Harga jual</label><input id="harga" type="number" inputmode="numeric"></div>
-<div><label>Jumlah stok</label><input id="stok" type="number" inputmode="numeric"></div>
+<input id="barcode" placeholder="Barcode">
+<input id="harga" type="number" placeholder="Harga jual">
+<input id="stok" type="number" placeholder="Jumlah stok">
+<input id="kategori" placeholder="Kategori">
+<button class="blue full" onclick="simpanBarang()">SIMPAN BARANG</button>
 </div>
-<button class="green full" onclick="simpanBarang()">SIMPAN BARANG</button>
-<button class="light full" onclick="resetForm()">BERSIHKAN</button>
-</div>
-<div class="card">
-<h2>Daftar Barang</h2>
-<input id="filter" placeholder="Cari barang..." oninput="tampilBarang()">
-<div class="wrap"><table>
+<div class="panel scroll">
+<table>
 <thead><tr><th>Barang</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr></thead>
-<tbody id="daftarBarang"></tbody>
-</table></div>
+<tbody id="daftar"></tbody>
+</table>
 </div>
 </section>
 
-<section id="riwayat">
-<div class="card">
-<h2>Riwayat Transaksi</h2>
-<div id="daftarRiwayat"></div>
+<section id="transaksi" class="page">
+<div class="panel scroll">
+<h3>RIWAYAT TRANSAKSI</h3>
+<table>
+<thead><tr><th>Nota</th><th>Waktu</th><th>Pelanggan</th><th>Total</th><th>Nota</th></tr></thead>
+<tbody id="riwayat"></tbody>
+</table>
 </div>
 </section>
 
-<section id="cadangan">
-<div class="card">
-<h2>Cadangan Data</h2>
-<p>Unduh cadangan barang dan transaksi secara rutin.</p>
-<button class="full" onclick="backup()">UNDUH CADANGAN JSON</button>
-<label>Pulihkan cadangan</label>
-<input type="file" id="fileCadangan" accept=".json">
+<section id="laporan" class="page">
+<div class="panel">
+<h3>LAPORAN PENJUALAN</h3>
+<p>Omzet hari ini:</p>
+<div class="total" id="omzet">Rp0</div>
+<p>Jumlah transaksi: <b id="jumlah">0</b></p>
+</div>
+</section>
+
+<section id="backup" class="page">
+<div class="panel">
+<h3>CADANGAN DATA</h3>
+<button class="blue full" onclick="cadangkan()">UNDUH BACKUP DATA</button>
+<input type="file" id="fileBackup" accept=".json">
 <button class="green full" onclick="pulihkan()">PULIHKAN DATA</button>
-</div>
-<div class="card">
-<h2>WhatsApp Toko</h2>
-<label>Nomor WhatsApp (awali 62)</label>
-<input id="wa" placeholder="628xxxxxxxxxx">
-<button class="full" onclick="simpanWA()">SIMPAN NOMOR</button>
+<p><small>Simpan backup secara berkala agar data tidak hilang.</small></p>
 </div>
 </section>
+
 </main>
 
-<div id="notaCetak"></div>
-
 <script>
-const K="wsj_barang",T="wsj_transaksi";
-let barang=JSON.parse(localStorage.getItem(K)||"[]");
-let riwayat=JSON.parse(localStorage.getItem(T)||"[]");
+let barang=JSON.parse(localStorage.getItem('wsj_barang')||'[]');
+let transaksi=JSON.parse(localStorage.getItem('wsj_transaksi')||'[]');
 let keranjang=[];
 
-const rupiah=n=>"Rp"+Number(n||0).toLocaleString("id-ID");
+const rp=n=>'Rp'+Number(n).toLocaleString('id-ID');
 const simpan=()=>{
- localStorage.setItem(K,JSON.stringify(barang));
- localStorage.setItem(T,JSON.stringify(riwayat));
+localStorage.setItem('wsj_barang',JSON.stringify(barang));
+localStorage.setItem('wsj_transaksi',JSON.stringify(transaksi));
 };
-const aman=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
-function buka(id,tombol){
- document.querySelectorAll("main section").forEach(x=>x.classList.remove("active"));
- document.getElementById(id).classList.add("active");
- document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
- tombol.classList.add("active");
- tampilBarang();tampilRiwayat();
-}
-
-function resetForm(){
- ["editId","nama","kode","harga","stok"].forEach(x=>document.getElementById(x).value="");
+function halaman(id,btn){
+document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+btn.classList.add('active');
+render();
 }
 
 function simpanBarang(){
- let id=editId.value,n=nama.value.trim(),k=kode.value.trim();
- let h=Number(harga.value),s=Number(stok.value);
- if(!n)return alert("Nama barang wajib diisi");
- if(h<0||s<0||!Number.isInteger(s))return alert("Harga atau stok tidak benar");
- if(k&&barang.some(b=>b.kode.toLowerCase()===k.toLowerCase()&&b.id!==id))return alert("Barcode sudah dipakai");
- if(id){
- let b=barang.find(x=>x.id===id);
- Object.assign(b,{nama:n,kode:k,harga:h,stok:s});
- }else{
- barang.push({id:String(Date.now())+Math.random(),nama:n,kode:k,harga:h,stok:s});
- }
- simpan();resetForm();tampilBarang();alert("Barang tersimpan");
+let nama=document.getElementById('nama').value.trim();
+let harga=Number(document.getElementById('harga').value);
+let stok=Number(document.getElementById('stok').value);
+if(!nama||harga<=0||stok<0)return alert('Isi nama, harga dan stok dengan benar');
+barang.push({
+id:Date.now(),nama,
+barcode:document.getElementById('barcode').value,
+harga,stok,
+kategori:document.getElementById('kategori').value
+});
+simpan();render();
+['nama','barcode','harga','stok','kategori'].forEach(x=>document.getElementById(x).value='');
+alert('Barang berhasil disimpan');
 }
 
 function tampilBarang(){
- let q=(filter.value||"").toLowerCase();
- daftarBarang.innerHTML=barang.filter(b=>(b.nama+" "+b.kode).toLowerCase().includes(q)).map(b=>
- `<tr><td>${aman(b.nama)}<br><small>${aman(b.kode)}</small></td>
- <td>${rupiah(b.harga)}</td><td>${b.stok}</td>
- <td><button onclick="editBarang('${b.id}')">Edit</button>
- <button class="red" onclick="hapusBarang('${b.id}')">X</button></td></tr>`
- ).join("")||"<tr><td colspan='4'>Belum ada barang</td></tr>";
+let q=document.getElementById('cari').value.toLowerCase();
+let list=barang.filter(b=>(b.nama+' '+b.barcode).toLowerCase().includes(q));
+document.getElementById('produk').innerHTML=list.map(b=>`
+<button class="product" onclick="tambah(${b.id})">
+<b>${b.nama}</b>${rp(b.harga)}
+<small>Stok: ${b.stok}</small>
+</button>`).join('');
+}
+
+function tambah(id){
+let b=barang.find(x=>x.id===id);
+if(!b||b.stok<=0)return alert('Stok habis');
+let k=keranjang.find(x=>x.id===id);
+if(k){if(k.jumlah>=b.stok)return alert('Stok tidak cukup');k.jumlah++}
+else keranjang.push({...b,jumlah:1});
+render();
+}
+
+function ubah(id,angka){
+let k=keranjang.find(x=>x.id===id);
+let b=barang.find(x=>x.id===id);
+if(!k)return;
+k.jumlah+=angka;
+if(k.jumlah<=0)keranjang=keranjang.filter(x=>x.id!==id);
+if(k&&k.jumlah>b.stok){k.jumlah=b.stok;alert('Stok maksimal')}
+render();
+}
+
+function hitung(){
+return keranjang.reduce((a,b)=>a+b.harga*b.jumlah,0);
+}
+
+function render(){
+tampilBarang();
+document.getElementById('keranjang').innerHTML=keranjang.map(k=>`
+<div class="row" style="padding:9px 0;border-bottom:1px solid #ddd">
+<div>${k.nama}<br><small>${rp(k.harga)} × ${k.jumlah}</small></div>
+<div>
+<button onclick="ubah(${k.id},-1)">−</button>
+${k.jumlah}
+<button onclick="ubah(${k.id},1)">+</button>
+</div>
+</div>`).join('');
+document.getElementById('total').textContent=rp(hitung());
+
+document.getElementById('daftar').innerHTML=barang.map(b=>`
+<tr><td>${b.nama}<br><small>${b.barcode}</small></td>
+<td>${rp(b.harga)}</td><td>${b.stok}</td>
+<td><button onclick="editBarang(${b.id})">Edit</button>
+<button class="red" onclick="hapusBarang(${b.id})">Hapus</button></td></tr>`).join('');
+
+document.getElementById('riwayat').innerHTML=transaksi.map(t=>`
+<tr><td>${t.no}</td><td>${t.waktu}</td><td>${t.pelanggan}</td>
+<td>${rp(t.total)}</td><td><button onclick="cetak(${JSON.stringify(t.no)})">Cetak</button></td></tr>`).join('');
+
+let hari=new Date().toLocaleDateString('id-ID');
+let hariIni=transaksi.filter(t=>t.hari===hari);
+document.getElementById('omzet').textContent=rp(hariIni.reduce((a,t)=>a+t.total,0));
+document.getElementById('jumlah').textContent=hariIni.length;
 }
 
 function editBarang(id){
- let b=barang.find(x=>x.id===id);if(!b)return;
- editId.value=b.id;nama.value=b.nama;kode.value=b.kode;
- harga.value=b.harga;stok.value=b.stok;
- buka("barang",document.querySelectorAll("nav button")[1]);
+let b=barang.find(x=>x.id===id);
+let n=prompt('Nama barang',b.nama);if(n===null)return;
+let h=Number(prompt('Harga jual',b.harga));
+let s=Number(prompt('Stok',b.stok));
+if(!n.trim()||h<=0||s<0)return alert('Data tidak valid');
+b.nama=n.trim();b.harga=h;b.stok=s;simpan();render();
 }
+
 function hapusBarang(id){
- if(confirm("Hapus barang?")){
- barang=barang.filter(b=>b.id!==id);simpan();tampilBarang();
- }
+if(confirm('Hapus barang ini?')){barang=barang.filter(x=>x.id!==id);simpan();render()}
 }
 
-cari.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();cariBarang()}});
-function cariBarang(){
- let q=cari.value.trim().toLowerCase();if(!q)return;
- let b=barang.find(x=>x.kode.toLowerCase()===q)||barang.find(x=>x.nama.toLowerCase().includes(q));
- if(!b)return alert("Barang tidak ditemukan");
- if(b.stok<1)return alert("Stok habis");
- let k=keranjang.find(x=>x.id===b.id);
- if(k){if(k.qty>=b.stok)return alert("Stok tidak cukup");k.qty++}
- else keranjang.push({id:b.id,qty:1});
- cari.value="";tampilKeranjang();
+function bayar(){
+if(!keranjang.length)return alert('Keranjang kosong');
+let total=hitung();
+let uang=Number(prompt('Total: '+rp(total)+'\nMasukkan uang diterima:'));
+if(!Number.isFinite(uang)||uang<total)return alert('Uang kurang atau tidak valid');
+for(let k of keranjang){
+let b=barang.find(x=>x.id===k.id);
+if(!b||b.stok<k.jumlah)return alert('Stok '+k.nama+' tidak mencukupi');
+}
+barang.forEach(b=>{
+let k=keranjang.find(x=>x.id===b.id);
+if(k)b.stok-=k.jumlah;
+});
+let t={
+no:'WSJ-'+Date.now(),
+waktu:new Date().toLocaleString('id-ID'),
+hari:new Date().toLocaleDateString('id-ID'),
+pelanggan:document.getElementById('pelanggan').value||'-',
+items:keranjang.map(k=>({...k})),
+total,uang,kembali:uang-total
+};
+transaksi.unshift(t);
+keranjang=[];
+document.getElementById('pelanggan').value='';
+simpan();render();cetak(t.no);
+alert('Transaksi berhasil. Kembalian: '+rp(t.kembali));
 }
 
-function ubah(id,n){
- let k=keranjang.find(x=>x.id===id),b=barang.find(x=>x.id===id);
- if(!k||!b)return;k.qty+=n;
- if(k.qty<1)keranjang=keranjang.filter(x=>x.id!==id);
- if(k.qty>b.stok){k.qty=b.stok;alert("Stok tidak cukup")}
- tampilKeranjang();
+function cetak(no){
+let t=transaksi.find(x=>x.no===no);if(!t)return;
+let isi=`
+<div style="font-family:monospace;width:58mm;color:black">
+<center><b>WARUNG SAMI JAYA</b><br>Terima kasih telah berbelanja</center>
+<hr>${t.no}<br>${t.waktu}<br>Pelanggan: ${t.pelanggan}<hr>
+${t.items.map(k=>`${k.nama}<br>${k.jumlah} x ${rp(k.harga)} = ${rp(k.jumlah*k.harga)}<br>`).join('')}
+<hr>Total: ${rp(t.total)}<br>Tunai: ${rp(t.uang)}<br>Kembali: ${rp(t.kembali)}
+<hr><center>SELAMAT DATANG KEMBALI</center></div>`;
+let w=window.open('','_blank','width=350,height=600');
+if(!w)return alert('Izinkan pop-up untuk mencetak nota');
+w.document.write(isi);w.document.close();w.print();
 }
 
-function jumlah(){
- return keranjang.reduce((a,k)=>{
- let b=barang.find(x=>x.id===k.id);
- return a+(b?b.harga*k.qty:0);
- },0);
-}
-function tampilKeranjang(){
- keranjang.innerHTML;
- let box=document.getElementById("keranjang");
- box.innerHTML=window.keranjang.length?window.keranjang.map(k=>{
- let b=barang.find(x=>x.id===k.id);
- return `<div class="item"><b>${aman(b.nama)}</b><br>${rupiah(b.harga)} × ${k.qty}
- <button onclick="ubah('${k.id}',-1)">−</button>
- <button onclick="ubah('${k.id}',1)">+</button>
- </div>`;
- }).join(""):"Keranjang kosong";
- total.textContent=rupiah(jumlah());hitung();
-}
-function hitung(){
- kembali.textContent=rupiah(Math.max(0,(Number(bayar.value)||0)-jumlah()));
-}
-function kosongkan(){keranjang=[];bayar.value="";tampilKeranjang()}
-
-function transaksiSimpan(){
- if(!keranjang.length)return alert("Keranjang kosong");
- let tot=jumlah(),uang=Number(bayar.value)||0;
- if(uang<tot)return alert("Uang pembayaran kurang");
- for(let k of keranjang){
- let b=barang.find(x=>x.id===k.id);
- if(!b||b.stok<k.qty)return alert("Stok tidak cukup");
- }
- let waktu=new Date();
- let nomor="WSJ-"+waktu.getFullYear()+String(waktu.getMonth()+1).padStart(2,"0")+String(waktu.getDate()).padStart(2,"0")+"-"+String(Date.now()).slice(-6);
- let items=keranjang.map(k=>{
- let b=barang.find(x=>x.id===k.id);
- b.stok-=k.qty;
- return {nama:b.nama,harga:b.harga,qty:k.qty,subtotal:b.harga*k.qty};
- });
- let t={nomor,waktu:waktu.toISOString(),pelanggan:pelanggan.value,items,total:tot,bayar:uang,kembali:uang-tot};
- riwayat.unshift(t);
- try{simpan()}catch(e){return alert("Penyimpanan gagal. Jangan tutup halaman; ekspor cadangan segera.")}
- cetak(t);keranjang=[];pelanggan.value="";bayar.value="";
- tampilKeranjang();tampilBarang();tampilRiwayat();
+function cadangkan(){
+let data={barang,transaksi};
+let a=document.createElement('a');
+a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));
+a.download='backup-warung-sami-jaya.json';a.click();
 }
 
-function cetak(t){
- notaCetak.innerHTML=`<center><h2>WARUNG SAMI JAYA</h2>Jl. Kutilang Sumingkir<br>
- ${aman(t.nomor)}<br>${new Date(t.waktu).toLocaleString("id-ID")}<br>
- Pelanggan: ${aman(t.pelanggan||"-")}<hr></center>
- ${t.items.map(i=>`${aman(i.nama)}<br>${i.qty} x ${rupiah(i.harga)} = ${rupiah(i.subtotal)}<br>`).join("")}
- <hr>Total: ${rupiah(t.total)}<br>Bayar: ${rupiah(t.bayar)}<br>
- Kembali: ${rupiah(t.kembali)}<hr><center>Terima kasih</center>`;
- window.print();
-}
-
-function tampilRiwayat(){
- daftarRiwayat.innerHTML=riwayat.map(t=>
- `<div class="item"><b>${aman(t.nomor)}</b><br>
- <small>${new Date(t.waktu).toLocaleString("id-ID")} · ${aman(t.pelanggan||"Tanpa nama")}</small><br>
- ${rupiah(t.total)}
- <button onclick="cetakUlang('${t.nomor}')">Cetak</button>
- <button onclick="kirimWA('${t.nomor}')">WhatsApp</button></div>`
- ).join("")||"Belum ada transaksi";
-}
-function cetakUlang(n){let t=riwayat.find(x=>x.nomor===n);if(t)cetak(t)}
-function simpanWA(){
- let n=wa.value.replace(/\D/g,"");
- if(n&&!n.startsWith("62"))return alert("Nomor harus diawali 62");
- localStorage.setItem("wsj_wa",n);alert("Nomor tersimpan");
-}
-function kirimWA(n){
- let t=riwayat.find(x=>x.nomor===n),nomor=localStorage.getItem("wsj_wa");
- if(!nomor)return alert("Isi nomor WhatsApp di menu Cadangan");
- let pesan=`WARUNG SAMI JAYA\nJl. Kutilang Sumingkir\nNota ${t.nomor}\n${t.items.map(i=>i.nama+" x "+i.qty+" = "+rupiah(i.subtotal)).join("\n")}\nTOTAL ${rupiah(t.total)}\nBAYAR ${rupiah(t.bayar)}\nKEMBALI ${rupiah(t.kembali)}`;
- window.open("https://wa.me/"+nomor+"?text="+encodeURIComponent(pesan),"_blank");
-}
-function backup(){
- let data={barang,riwayat,wa:localStorage.getItem("wsj_wa")||""};
- let a=document.createElement("a"),u=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:"application/json"}));
- a.href=u;a.download="cadangan-warung-sami-jaya.json";a.click();URL.revokeObjectURL(u);
-}
 function pulihkan(){
- let f=fileCadangan.files[0];if(!f)return alert("Pilih file cadangan");
- if(!confirm("Ganti data saat ini dengan cadangan?"))return;
- let r=new FileReader();
- r.onload=()=>{
- try{
- let d=JSON.parse(r.result);
- if(!Array.isArray(d.barang)||!Array.isArray(d.riwayat))throw Error();
- barang=d.barang;riwayat=d.riwayat;
- localStorage.setItem("wsj_wa",d.wa||"");simpan();
- tampilBarang();tampilRiwayat();alert("Data dipulihkan");
- }catch(e){alert("File cadangan tidak valid")}
- };
- r.readAsText(f);
+let f=document.getElementById('fileBackup').files[0];
+if(!f)return alert('Pilih file backup dahulu');
+let r=new FileReader();
+r.onload=()=>{
+try{
+let d=JSON.parse(r.result);
+if(!Array.isArray(d.barang)||!Array.isArray(d.transaksi))throw Error();
+if(!confirm('Ganti data sekarang dengan backup?'))return;
+barang=d.barang;transaksi=d.transaksi;simpan();render();alert('Data dipulihkan');
+}catch(e){alert('File backup tidak valid')}
+};
+r.readAsText(f);
 }
-tampilBarang();tampilKeranjang();tampilRiwayat();
+
+setInterval(()=>{
+document.getElementById('jam').textContent=new Date().toLocaleString('id-ID');
+},1000);
+render();
 </script>
 </body>
 </html>
